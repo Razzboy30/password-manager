@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import pyperclip
 from random import choice, randint, shuffle
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
  
 def generate_password():
@@ -23,21 +24,58 @@ def generate_password():
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
+def find_password():
+    try:
+        with open("cont.json", mode="r") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+            messagebox.showinfo(title="Oops", message="No Data File found")
+    else:
+        webs = web_txt.get()
+        if webs in data:
+            email = data[webs]["email"]
+            password = data[webs]["password"]
+            messagebox.showinfo(title="Data Found", message=f"Heres the data:\nEmail:{email}\nPassword:{password}")
+        else:
+            messagebox.showinfo(title="Oops", message="No data for website exist")
+
+
 def save():
     website_name = web_txt.get()
     email = user_txt.get()
     password = pass_txt.get()
+    new_data = {
+        website_name: {
+            "email" : email,
+            "password" : password,
+        }
+    }
+    
     if len(website_name) == 0 or len(email) == 0 or len(password) == 0:
         messagebox.showinfo(title="Oops", message="You cannot leave fields empty")
     else:
-        is_ok = messagebox.askokcancel(title=website_name, message=f"These are details entered: \nEmail: {email}\n Password: {password} \nIs it ok to continue?")
-        
-        if is_ok:
-            with open("cont.txt", mode="a") as f:
-                f.write(f"Website name: {website_name}, Email/user: {email}, Password: {password}\n")
+        try:
+            with open("cont.json", mode="r") as data_file:
+                print("Hello")
+        except FileNotFoundError:
+            with open("cont.json",mode="w") as data_file:
+                json.dump(new_data,data_file, indent=4)
+            
+        else:
+            with open("cont.json", mode="r") as data_file:
+                # Reading old data
+                data = json.load(data_file)
+                # updating old data with new data
+                data.update(new_data)
+            with open("cont.json",mode="w") as data_file:
+                # Saving updated data
+                json.dump(data,data_file, indent=4)
+        finally:
                 web_txt.delete(0,END)
-                user_txt.delete(0,END)
                 pass_txt.delete(0,END)
+            
+            
+        
 
 # ---------------------------- UI SETUP ------------------------------- #
 
@@ -53,8 +91,10 @@ canvas.grid(column=1, row=0)
 web_lab = Label(text="Website")
 web_lab.grid(column=0,row=1)
 web_txt = Entry(width=35)
-web_txt.grid(column=1,row=1,columnspan=2)
+web_txt.grid(column=1,row=1)
 web_txt.focus()
+search_btn = Button(text="Search", command=find_password)
+search_btn.grid(column=2,row=1)
 
 user_lab = Label(text="Email/pass")
 user_lab.grid(column=0,row=2)
